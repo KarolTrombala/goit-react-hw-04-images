@@ -86,18 +86,6 @@ export const ImageGallery = ({ searchQuery, onImageClick }) => {
         }
     }, [images, scrollPosition]);
 
-
-    // // otwieranie modala
-    // openModal = (image) => {
-    //     this.setState({ selectedImage: image, isModalOpen: true })
-    // }
-
-    // // zamykanie modala
-    // closeModal = () => {
-    //     this.setState({ selectedImage: null, isModalOpen: false })
-    // }
-
-
     return (
         <div>
             <ul className={css.gallery} ref={listRef}>
