@@ -1,146 +1,132 @@
-import { Component, createRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import css from './ImageGallery.module.css'
 import PropTypes from 'prop-types'
 import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem'
 import { getImages } from 'services/api'
 import { Loader } from 'components/Loader/Loader'
-import { Modal } from 'components/Modal/Modal'
 import { Button } from 'components/Button/Button'
 
-export class ImageGallery extends Component {
-    constructor(props) {
-        super(props)
-        this.listRef = createRef()
-    }
 
-    state = {
-        images: [],
-        page: 1,
-        totalPages: 0,
-        isLoading: false,
-        selectedImage: null,
-        isModalOpen: false,
-        scrollPosition: 0,
-    }
+export const ImageGallery = ({ searchQuery, onImageClick }) => {
+    const listRef = useRef();
+
+    const [images, setImages] = useState([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+    const [isLoading, setIsLoading] = useState(false);
+    const [scrollPosition, setScrollPosition] = useState(0);
+    const [noResults, setNoResults] = useState('');
+
 
     // pozycja scroll
-    getSnapshotBeforeUpdate() {
-        const list = this.listRef.current
-        const newScrollPosition = list.scrollHeight - list.scrollTop
-        return newScrollPosition
-    }
+    const handleScroll = () => {
+        const newScrollPosition =
+            listRef.current.scrollHeight - listRef.current.scrollTop;
+        setScrollPosition(newScrollPosition);
+    };
 
-    // nowe zapytanie i nowa strona
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        const { page, images } = this.state
+    // pobieranie obrazów
+    const fetchImages = useCallback(async () => {
+        if (!searchQuery) {
+            return;
+        };
 
-        const query = this.props.searchQuery
-
-        if (this.props.searchQuery !== prevProps.searchQuery) {
-            this.setState({ images: [], page: 1 }, () => {
-                this.fetchImages(query, 1)
-            })
+        setIsLoading(true);
+        
+        try {
+            const response = await getImages(query, page);
+            const data = response.data.hits;
+            const totalPages = Math.floor(response.data.total / 12);
+            if (page === 1) {
+                if (data.length === 0) {
+                    setImages([]);
+                    setNoResults(true);
+                } else {
+                    setImages([...data]);
+                    setNoResults(false);
+                    setTotalPages(totalPages);
+                    setScrollPosition(0);
+                }
+            } else {
+                // pobieranie obrazów na nowe strony
+                setImages(images => [...images, ...data]);
+                handleScroll();
+            }
+        } catch (error) {
+            console.log('error');
+        } finally {
+            setIsLoading(false);
         }
-        if (this.state.page !== prevState.page) {
-            this.loadMoreImages(query, page)
+    }, [searchQuery, page])
 
-            this.setState({
-                scrollPosition: snapshot,
-            })
+    // button load more handler - page + 1
+    const handleLoadMore = () => {
+        setPage(page + 1);
+    };
+    
+    // ustawienie page = 1 przy zmianie query
+    useEffect(() => {
+        setPage(1);
+    }, [searchQuery]);
+
+    // efekt dla query i page
+    useEffect(() => {
+        if (searchQuery) {
+            fetchImages();
         }
-        if (images !== prevState.images && images.length !== 0) {
+    }, [fetchImages, page, searchQuery]);
+
+    // efekt dla ładowania nowych obrazków
+    useEffect(() => {
+        if (images.length !== 0) {
             window.scrollTo({
-                top: this.state.scrollPosition,
+                top: scrollPosition,
                 behavior: 'smooth',
-            })
+            });
         }
-    }
+    }, [images, scrollPosition]);
 
-    // pobieranie obrazków do nowego zapytania
-    async fetchImages(query, page) {
-        this.setState({ isLoading: true, scrollPosition: 0 })
-        try {
-            const response = await getImages(query, page)
-            const data = response.data.hits
-            const totalPages = Math.floor(response.data.total / 12)
-            this.setState({
-                images: data,
-                page: 1,
-                totalPages: totalPages,
-            })
-        } catch (error) {
-            this.setState({ error })
-        } finally {
-            this.setState({ isLoading: false })
-        }
-    }
 
-    // pobieranie obrazków na nową stronę
-    async loadMoreImages(query, page) {
-        this.setState({ isLoading: true })
+    // // otwieranie modala
+    // openModal = (image) => {
+    //     this.setState({ selectedImage: image, isModalOpen: true })
+    // }
 
-        try {
-            const response = await getImages(query, page)
-            const data = response.data.hits
-            this.setState((prevState) => ({
-                images: [...prevState.images, ...data],
-            }))
-        } catch (error) {
-            this.setState({ error })
-        } finally {
-            this.setState({ isLoading: false })
-        }
-    }
+    // // zamykanie modala
+    // closeModal = () => {
+    //     this.setState({ selectedImage: null, isModalOpen: false })
+    // }
 
-    // obsługa buttona
-    handleLoadMore = () => {
-        this.setState((prevState) => ({ page: prevState.page + 1 }))
-    }
 
-    // otwieranie modala
-    openModal = (image) => {
-        this.setState({ selectedImage: image, isModalOpen: true })
-    }
+    return (
+        <div>
+            <ul className={css.gallery} ref={listRef}>
+                {images.map(({ id, ...rest }) => (
+                    <ImageGalleryItem
+                        key={id}
+                        {...rest}
+                        onClick={onImageClick}
+                    ></ImageGalleryItem>
+                ))}
+            </ul>
 
-    // zamykanie modala
-    closeModal = () => {
-        this.setState({ selectedImage: null, isModalOpen: false })
-    }
+            {isLoading && <Loader />}
 
-    render() {
-        const { images, page, totalPages, isLoading, selectedImage } =
-            this.state
+            {noResults && (
+                <p className={styles.message}>
+                    Sorry, there are no images matching your search query. Please try
+                    again.
+                </p>
+            )}
 
-        return (
-            <div>
-                <ul className={css.gallery} ref={this.listRef}>
-                    {images.map(({ id, ...rest }) => (
-                        <ImageGalleryItem
-                            key={id}
-                            {...rest}
-                            onClick={this.openModal}
-                        ></ImageGalleryItem>
-                    ))}
-                </ul>
-
-                {isLoading && <Loader />}
-
-                {page < totalPages && (
-                    <Button onClick={this.handleLoadMore}>Load more</Button>
-                )}
-
-                {selectedImage && (
-                    <Modal
-                        largeImageURL={this.state.selectedImage.largeImageURL}
-                        tags={this.state.selectedImage.tags}
-                        onClick={this.closeModal}
-                    />
-                )}
-            </div>
-        )
-    }
-}
+            {page < totalPages && (
+                <Button onClick={handleLoadMore}>Load more</Button>
+            )}
+        </div>
+    );
+};
 
 ImageGallery.propTypes = {
     searchQuery: PropTypes.string.isRequired,
-}
+    onImageClick: PropTypes.func.isRequired,
+};
