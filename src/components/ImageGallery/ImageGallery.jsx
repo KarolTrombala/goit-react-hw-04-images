@@ -34,7 +34,7 @@ export const ImageGallery = ({ searchQuery, onImageClick }) => {
         setIsLoading(true);
         
         try {
-            const response = await getImages(query, page);
+            const response = await getImages(searchQuery, page);
             const data = response.data.hits;
             const totalPages = Math.floor(response.data.total / 12);
             if (page === 1) {
@@ -101,7 +101,7 @@ export const ImageGallery = ({ searchQuery, onImageClick }) => {
             {isLoading && <Loader />}
 
             {noResults && (
-                <p className={styles.message}>
+                <p className={css.message}>
                     Sorry, there are no images matching your search query. Please try
                     again.
                 </p>

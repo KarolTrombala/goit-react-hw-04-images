@@ -7,7 +7,7 @@ export const App = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { selectedImage, isModalOpen, openModal, closeModal } = useModal();
     
-    const handleSearch = quer => {
+    const handleSearch = query => {
         setSearchQuery(query);
     };
 
