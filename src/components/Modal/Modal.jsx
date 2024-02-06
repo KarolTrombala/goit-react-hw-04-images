@@ -2,6 +2,7 @@ import css from './Modal.module.css'
 import PropTypes from 'prop-types'
 import { useState, useEffect } from 'react'
 
+
 export const Modal = ({ largeImageURL, tags, onClick }) => {
 
     const overlayClick = e => {
@@ -17,6 +18,7 @@ export const Modal = ({ largeImageURL, tags, onClick }) => {
                     className={css.image}
                     src={largeImageURL}
                     alt={tags}
+                    onClick={overlayClick}
                 />
             </div>
         </div>
@@ -45,8 +47,8 @@ export const useModal = () => {
     }
 
     useEffect(() => {
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape' && isModalOpen) {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isModalOpen) {
                 closeModal()
             }
         }
