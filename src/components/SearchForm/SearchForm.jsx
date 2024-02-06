@@ -1,12 +1,22 @@
 import css from './SearchForm.module.css'
 import PropTypes from 'prop-types'
+import { useState } from 'react';
 
 export const SearchForm = ({ onSubmit }) => {
-    const handleSubmit = (event) => {
-        event.preventDefault()
-        const query = event.target.elements.search.value
-        onSubmit(query)
-    }
+    const [query, setQuery] = useState('');
+
+    const handleSubmit = e => {
+        e.preventDefault()
+        const subQuery = query.trim();
+        if (subQuery) {
+            onSubmit(subQuery)
+        }
+        setQuery('');
+    };
+
+    const inputChange = e => {
+        setQuery(e.target.value);
+    };
 
     return (
         <form className={css.searchform} onSubmit={handleSubmit}>
@@ -21,6 +31,8 @@ export const SearchForm = ({ onSubmit }) => {
                 autoComplete="off"
                 autoFocus
                 placeholder="Search images and photos"
+                value={query}
+                onChange={inputChange}
             />
         </form>
     )

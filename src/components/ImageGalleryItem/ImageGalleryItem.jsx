@@ -1,7 +1,7 @@
 import css from './ImageGalleryItem.module.css'
 import PropTypes from 'prop-types'
 
-export const ImageGalleryItem = (props) => {
+export const ImageGalleryItem = props => {
     const { webformatURL, largeImageURL, tags, onClick } = props
 
     const handleImageClick = () => {
