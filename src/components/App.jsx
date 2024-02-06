@@ -3,9 +3,11 @@ import { Searchbar } from './SearchBar/SearchBar'
 import { ImageGallery } from './ImageGallery/ImageGallery'
 import { Modal, useModal } from './Modal/Modal'
 
+
 export const App = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const { selectedImage, isModalOpen, openModal, closeModal } = useModal();
+
     
     const handleSearch = query => {
         setSearchQuery(query);
@@ -24,7 +26,7 @@ export const App = () => {
             )}
         </div>
     )
-}    
+}  
 
 
 
